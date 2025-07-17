@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import { YouTubeVideo } from '@/types';
 
-// This would normally be in an environment variable
-const YOUTUBE_API_KEY = 'YOUR_YOUTUBE_API_KEY';
-const CHANNEL_ID = 'YOUR_CHANNEL_ID';
+// Get API key and channel ID from environment variables
+const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
+const CHANNEL_ID = process.env.YOUTUBE_CHANNEL_ID;
+
+// Check if environment variables are set
+if (!YOUTUBE_API_KEY || !CHANNEL_ID) {
+  console.error('YouTube API key or Channel ID is missing. Please check your .env.local file.');
+}
 
 // Type definitions for YouTube API response
 interface YouTubeApiResponse {
@@ -26,6 +31,14 @@ interface YouTubeApiResponse {
 
 export async function GET() {
   try {
+    // Check if environment variables are properly set
+    if (!YOUTUBE_API_KEY || !CHANNEL_ID) {
+      return NextResponse.json(
+        { error: 'YouTube API key or Channel ID is missing. Please check your .env.local file.' },
+        { status: 500 }
+      );
+    }
+    
     // Fetch videos from YouTube API
     const response = await fetch(
       `https://www.googleapis.com/youtube/v3/search?key=${YOUTUBE_API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=10&type=video`

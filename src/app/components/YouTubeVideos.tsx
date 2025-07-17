@@ -14,15 +14,21 @@ export default function YouTubeVideos() {
         setLoading(true);
         const response = await fetch('/api/youtube');
         
+        const data = await response.json();
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch videos');
+          // Check if this is an environment variable error
+          if (data.error && data.error.includes('YouTube API key or Channel ID is missing')) {
+            throw new Error('Environment variables for YouTube API are missing. Please check your .env.local file.');
+          } else {
+            throw new Error('Failed to fetch videos');
+          }
         }
         
-        const data = await response.json();
         setVideos(data.videos);
       } catch (err) {
         console.error('Error fetching videos:', err);
-        setError('Failed to load videos. Please try again later.');
+        setError(err instanceof Error ? err.message : 'Failed to load videos. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -40,9 +46,28 @@ export default function YouTubeVideos() {
   }
 
   if (error) {
+    const isEnvError = error.includes('Environment variables for YouTube API are missing');
+    
     return (
       <div className="max-w-5xl mx-auto p-6 text-center">
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-500 font-semibold mb-2">{error}</p>
+        
+        {isEnvError && (
+          <div className="bg-yellow-50 border border-yellow-200 p-4 mt-2 rounded text-left">
+            <h4 className="font-semibold text-yellow-800 mb-2">Developer Note:</h4>
+            <ol className="list-decimal pl-5 text-sm text-yellow-700 space-y-1">
+              <li>Create a <code className="bg-yellow-100 px-1 rounded">.env.local</code> file in the project root if it doesn&apos;t exist</li>
+              <li>Add the following variables to the file:
+                <pre className="bg-yellow-100 p-2 mt-1 rounded overflow-x-auto">
+                  YOUTUBE_API_KEY=your_youtube_api_key_here{'\n'}
+                  YOUTUBE_CHANNEL_ID=your_youtube_channel_id_here
+                </pre>
+              </li>
+              <li>Restart the development server</li>
+            </ol>
+            <p className="text-xs text-yellow-600 mt-2">See the README.md file for more information on setting up environment variables.</p>
+          </div>
+        )}
       </div>
     );
   }
